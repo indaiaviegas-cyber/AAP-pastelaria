@@ -49,4 +49,4 @@ Utilizando o padrão arquitetural MVC, a solução integra um banco de dados MyS
 4. Acesse no navegador: http://localhost:3000
 
 ---
-*Desenvolvido por Indaiá.*
+*Desenvolvido por Indaiá, Ian e Itallo.*
