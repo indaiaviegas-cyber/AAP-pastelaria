@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil - Tenda do Pastel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .bg-brand-blue { background-color: #0d1b2a; }
+        body { display: flex; flex-direction: column; min-height: 100vh; background-color: #f8f9fa; }
+        .main-content { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px 15px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-danger shadow-sm mb-2">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+                <span style="font-size: 1.5rem;">🥟</span> 
+                <span>Tenda do Pastel <small class="text-white-50" style="font-size: 0.8rem; display:block;">Carapicuíba</small></span>
+            </a>
+            <a href="/" class="btn btn-outline-light btn-sm fw-bold px-3" style="border-radius: 8px;">
+                <i class="fa-solid fa-house me-1"></i> Cardápio
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="card shadow-sm border-0 p-4 w-100" style="max-width: 500px; border-radius: 20px; background: #ffffff;">
+            <div class="text-center mb-4">
+                <div class="bg-danger text-white rounded-circle d-inline-flex justify-content-center align-items-center mb-2 shadow-sm" style="width: 70px; height: 70px; font-size: 2rem;">
+                    👤
+                </div>
+                <h3 class="fw-bold text-dark">Meu Perfil</h3>
+                <p class="text-muted small">Mantenha os seus dados de entrega atualizados.</p>
+            </div>
+            
+            <form id="formPerfil">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small mb-1">Nome Completo</label>
+                    <input type="text" id="nome" class="form-control bg-light" required style="border-radius: 8px;">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small mb-1">E-mail (Acesso)</label>
+                    <input type="email" id="email" class="form-control bg-light text-muted" readonly style="border-radius: 8px; cursor: not-allowed;">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small mb-1">Telefone / WhatsApp</label>
+                    <input type="text" id="telefone" class="form-control bg-light" required style="border-radius: 8px;">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small mb-1">Endereço de Entrega</label>
+                    <textarea id="endereco" class="form-control bg-light" rows="2" required style="border-radius: 8px;"></textarea>
+                </div>
+                
+                <button type="submit" class="btn btn-danger w-100 py-2 fw-bold shadow-sm" style="border-radius: 10px; font-size: 1.1rem;">
+                    Salvar Alterações 💾
+                </button>
+
+                <hr class="mt-4 mb-3">
+                <button type="button" class="btn btn-outline-dark w-100 py-2 fw-bold shadow-sm mb-2" style="border-radius: 10px;" onclick="abrirModalSenha()">
+                    🔒 Alterar Minha Senha
+                </button>
+
+            </form>
+        </div>
+    </main>
+
+    <footer class="bg-brand-blue py-4 mt-auto text-center border-top border-secondary">
+        <div class="container">
+            <p class="text-light mb-1 fw-medium" style="font-size: 0.95rem; letter-spacing: 0.5px;">© 2024 Tenda do Pastel - Carapicuíba/SP</p>
+            <p class="text-muted small mb-0">Projeto Integrador FATEC - Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        const usuarioAtual = JSON.parse(localStorage.getItem('usuario'));
+
+        if (!usuarioAtual) {
+            window.location.href = '/login';
+        } else {
+            // Preenche os campos automaticamente com os dados que estão na memória
+            document.getElementById('nome').value = usuarioAtual.nome || '';
+            document.getElementById('email').value = usuarioAtual.email || '';
+            document.getElementById('telefone').value = usuarioAtual.telefone || '';
+            document.getElementById('endereco').value = usuarioAtual.endereco || '';
+        }
+
+        document.getElementById('formPerfil').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const novosDados = {
+                nome: document.getElementById('nome').value.trim(),
+                telefone: document.getElementById('telefone').value.trim(),
+                endereco: document.getElementById('endereco').value.trim()
+            };
+
+            if (novosDados.nome.length < 3) return Swal.fire('Atenção', 'Digite o nome completo.', 'warning');
+
+            Swal.fire({ title: 'A salvar...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+            try {
+                const res = await fetch(`/api/clientes/${usuarioAtual.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(novosDados)
+                });
+
+                const data = await res.json();
+                
+                if (data.sucesso) {
+                    // Atualiza a memória (localStorage) com os novos dados para o site saber que mudou!
+                    usuarioAtual.nome = novosDados.nome;
+                    usuarioAtual.telefone = novosDados.telefone;
+                    usuarioAtual.endereco = novosDados.endereco;
+                    localStorage.setItem('usuario', JSON.stringify(usuarioAtual));
+
+                    Swal.fire('Sucesso! 🎉', 'Os seus dados foram atualizados.', 'success');
+                } else {
+                    Swal.fire('Erro', 'Não foi possível salvar no banco de dados.', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Erro de Conexão', 'Falha ao comunicar com o servidor.', 'error');
+            }
+        });
+
+        // FUNÇÃO PARA MUDAR A SENHA
+        async function abrirModalSenha() {
+            const { value: formValues } = await Swal.fire({
+                title: 'Alterar Senha 🔒',
+                html:
+                    '<input id="swal-senha-atual" class="swal2-input" type="password" placeholder="Senha Atual">' +
+                    '<input id="swal-nova-senha" class="swal2-input" type="password" placeholder="Nova Senha">',
+                focusConfirm: false,
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Salvar Nova Senha',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const senhaAtual = document.getElementById('swal-senha-atual').value;
+                    const novaSenha = document.getElementById('swal-nova-senha').value;
+                    if (!senhaAtual || !novaSenha) {
+                        Swal.showValidationMessage('Por favor, preencha os dois campos!');
+                    }
+                    if (novaSenha.length < 6) {
+                        Swal.showValidationMessage('A nova senha deve ter pelo menos 6 caracteres.');
+                    }
+                    return { senhaAtual, novaSenha };
+                }
+            });
+
+            if (formValues) {
+                Swal.fire({ title: 'A verificar...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+                try {
+                    const res = await fetch(`/api/clientes/${usuarioAtual.id}/senha`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formValues)
+                    });
+
+                    const data = await res.json();
+                    
+                    if (data.sucesso) {
+                        Swal.fire('Perfeito!', 'A sua senha foi alterada com sucesso.', 'success');
+                    } else {
+                        Swal.fire('Ops!', data.erro, 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('Erro', 'Falha ao comunicar com o servidor.', 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

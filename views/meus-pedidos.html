@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meus Pedidos - Tenda do Pastel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Cores oficiais da Tenda do Pastel */
+        .bg-brand-blue { background-color: #0d1b2a; }
+        .bg-brand-red { background-color: #dc3545; }
+        .text-brand-yellow { color: #ffca28; }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .main-content {
+            flex: 1;
+            padding: 40px 0;
+        }
+
+        /* Estilização para as Estrelas Interativas (Item 27) */
+        .rating-stars {
+            font-size: 2.5rem;
+            color: #ccc;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .rating-stars:hover,
+        .rating-stars.selected {
+            color: #ffc107; /* Cor amarela para estrelas ativas */
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-danger shadow-sm mb-2">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+                <span style="font-size: 1.5rem;">🥟</span> 
+                <span>Tenda do Pastel <small class="text-white-50" style="font-size: 0.8rem; display:block;">Carapicuíba</small></span>
+            </a>
+            <a href="/" class="btn btn-outline-light btn-sm fw-bold px-3" style="border-radius: 8px;">
+                <i class="fa-solid fa-house me-1"></i> Cardápio
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container" style="max-width: 900px;">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold m-0 text-dark">Meu Histórico de Pedidos 📋</h2>
+            </div>
+
+            <div id="lista-pedidos"></div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalAvaliacao" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="border-radius: 20px; border: none;">
+                <div class="modal-header border-0 bg-danger text-white" style="border-radius: 20px 20px 0 0;">
+                    <h5 class="modal-title fw-bold">Avaliar Pedido #<span id="modal-id-pedido"></span> 🥟</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 text-start">
+                    <p class="text-muted text-center mb-4">Selecione o produto abaixo para registrar sua nota e comentário individual!</p>
+                    <div id="produtos-para-avaliar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-brand-blue py-4 mt-auto text-center border-top border-secondary">
+        <div class="container">
+            <p class="text-light mb-1 fw-medium" style="font-size: 0.95rem; letter-spacing: 0.5px;">
+                © 2024 Tenda do Pastel - Carapicuíba/SP
+            </p>
+            <p class="text-muted small mb-0">Projeto Integrador FATEC - Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
+        let pedidoIdAtual = null;
+        let itensDoPedidoAtual = []; 
+
+        // TRAVA DE SEGURANÇA
+        if (!usuarioLogado) {
+            window.location.href = '/login';
+        }
+
+        async function carregarHistorico() {
+            try {
+                // CORREÇÃO: Adicionado o Date.now() para impedir o cache e mostrar o status sempre atualizado!
+                const res = await fetch(`/api/meus-pedidos/${usuarioLogado.id}?t=${Date.now()}`);
+                const pedidos = await res.json();
+                const container = document.getElementById('lista-pedidos');
+                
+                if (pedidos.length === 0) {
+                    container.innerHTML = `<div class="alert alert-secondary text-center shadow-sm" style="border-radius: 12px;">Você ainda não fez nenhum pedido.</div>`;
+                    return;
+                }
+
+                container.innerHTML = "";
+                pedidos.forEach(pedido => {
+                    let acaoDoPedido = "";
+                    let badgeCor = "bg-secondary";
+
+                    // Define a cor do selo visual do Status
+                    if(pedido.status_pedido === 'Pendente') badgeCor = 'bg-warning text-dark';
+                    if(pedido.status_pedido === 'Preparando') badgeCor = 'bg-info text-dark';
+                    if(pedido.status_pedido === 'Saiu para Entrega') badgeCor = 'bg-primary';
+                    if(pedido.status_pedido === 'Entregue') badgeCor = 'bg-success';
+                    if(pedido.status_pedido === 'Cancelado') badgeCor = 'bg-danger';
+
+                    // Lógica do Botão de Avaliar (Só aparece se estiver Entregue)
+                    if (pedido.status_pedido === 'Entregue') {
+                        if (pedido.ja_avaliado > 0) {
+                            acaoDoPedido = `<span class="badge bg-success p-2 px-3 shadow-sm" style="font-size: 0.90rem;"><i class="fa-solid fa-check-double me-1"></i> Avaliado</span>`;
+                        } else {
+                            acaoDoPedido = `<button class="btn btn-primary fw-bold btn-sm shadow-sm px-3" onclick="abrirModalAvaliacao(${pedido.id_pedido})">Avaliar Pedido ⭐</button>`;
+                        }
+                    } else {
+                        acaoDoPedido = `<span class="badge bg-light text-muted border p-2">Aguardando Entrega</span>`;
+                    }
+
+                    // NOVO LAYOUT DO CARD: Agora com a coluna de STATUS!
+                    container.innerHTML += `
+                        <div class="card shadow-sm border-0 mb-3 p-4" style="border-radius: 15px; background: #ffffff;">
+                            <div class="row align-items-center text-center text-md-start">
+                                <div class="col-6 col-md-2 mb-2 mb-md-0">
+                                    <span class="text-muted small">Pedido</span>
+                                    <h5 class="fw-bold text-danger m-0">#${pedido.id_pedido}</h5>
+                                </div>
+                                <div class="col-6 col-md-3 mb-2 mb-md-0">
+                                    <span class="text-muted small">Data</span>
+                                    <p class="m-0 fw-semibold text-dark" style="font-size: 0.95rem;">${pedido.data}</p>
+                                </div>
+                                <div class="col-6 col-md-2 mb-3 mb-md-0 border-start border-end">
+                                    <span class="text-muted small">Status</span><br>
+                                    <span class="badge ${badgeCor} p-2 shadow-sm w-100">${pedido.status_pedido}</span>
+                                </div>
+                                <div class="col-6 col-md-2 mb-3 mb-md-0">
+                                    <span class="text-muted small">Total</span>
+                                    <p class="m-0 fw-bold text-success">R$ ${parseFloat(pedido.valor_total).toFixed(2)}</p>
+                                </div>
+                                <div class="col-12 col-md-3 text-center text-md-end mt-2 mt-md-0">
+                                    ${acaoDoPedido}
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function abrirModalAvaliacao(idPedido) {
+            pedidoIdAtual = idPedido;
+            document.getElementById('modal-id-pedido').innerText = idPedido;
+            
+            const containerProdutos = document.getElementById('produtos-para-avaliar');
+            containerProdutos.innerHTML = "<p class='text-center text-muted'>Carregando produtos...</p>";
+
+            const minhaModal = new bootstrap.Modal(document.getElementById('modalAvaliacao'));
+            minhaModal.show();
+
+            try {
+                const res = await fetch(`/api/pedido-itens/${idPedido}`);
+                itensDoPedidoAtual = await res.json(); 
+                
+                if (itensDoPedidoAtual.length === 0) {
+                    containerProdutos.innerHTML = "<p class='text-danger text-center'>Nenhum produto encontrado neste pedido.</p>";
+                    return;
+                }
+
+                containerProdutos.innerHTML = "";
+                
+                itensDoPedidoAtual.forEach((item) => {
+                    containerProdutos.innerHTML += `
+                        <div class="card p-3 mb-3 border border-light shadow-sm" style="border-radius: 12px; background: #ffffff;">
+                            <h6 class="fw-bold text-danger mb-2">🥟 ${item.nome}</h6>
+                            
+                            <div class="mb-2">
+                                <span class="rating-stars" style="font-size: 1.8rem; cursor: pointer; color: #ccc;" id="star-${item.id_produto}-1" onclick="votarEstrela(${item.id_produto}, 1)">★</span>
+                                <span class="rating-stars" style="font-size: 1.8rem; cursor: pointer; color: #ccc;" id="star-${item.id_produto}-2" onclick="votarEstrela(${item.id_produto}, 2)">★</span>
+                                <span class="rating-stars" style="font-size: 1.8rem; cursor: pointer; color: #ccc;" id="star-${item.id_produto}-3" onclick="votarEstrela(${item.id_produto}, 3)">★</span>
+                                <span class="rating-stars" style="font-size: 1.8rem; cursor: pointer; color: #ccc;" id="star-${item.id_produto}-4" onclick="votarEstrela(${item.id_produto}, 4)">★</span>
+                                <span class="rating-stars" style="font-size: 1.8rem; cursor: pointer; color: #ccc;" id="star-${item.id_produto}-5" onclick="votarEstrela(${item.id_produto}, 5)">★</span>
+                                <input type="hidden" id="nota-${item.id_produto}" value="0">
+                            </div>
+
+                            <textarea id="comentario-${item.id_produto}" class="form-control form-control-sm bg-light" rows="2" placeholder="O que achou da massa ou recheio deste item?"></textarea>
+                        </div>`;
+                });
+
+                containerProdutos.innerHTML += `
+                    <button class="btn btn-danger w-100 fw-bold py-3 mt-2 shadow-sm" style="border-radius: 10px;" onclick="enviarTodasAvaliacoes()">
+                        Enviar Todas as Avaliações 🚀
+                    </button>`;
+
+            } catch (err) {
+                console.error(err);
+                containerProdutos.innerHTML = "<p class='text-danger text-center'>Erro ao carregar os itens.</p>";
+            }
+        }
+
+        function votarEstrela(idProduto, nota) {
+            document.getElementById(`nota-${idProduto}`).value = nota;
+            for (let i = 1; i <= 5; i++) {
+                const estrela = document.getElementById(`star-${idProduto}-${i}`);
+                if (i <= nota) {
+                    estrela.style.color = "#ffc107"; 
+                } else {
+                    estrela.style.color = "#ccc"; 
+                }
+            }
+        }
+
+        async function enviarTodasAvaliacoes() {
+            const avaliacoesParaEnviar = [];
+
+            itensDoPedidoAtual.forEach(item => {
+                const nota = parseInt(document.getElementById(`nota-${item.id_produto}`).value);
+                const comentario = document.getElementById(`comentario-${item.id_produto}`).value;
+
+                if (nota > 0) {
+                    avaliacoesParaEnviar.push({
+                        id_produto: item.id_produto,
+                        nota: nota,
+                        comentario: comentario // CORREÇÃO: Estava "comment", o back-end pede "comentario".
+                    });
+                }
+            });
+
+            if (avaliacoesParaEnviar.length === 0) {
+                return Swal.fire('Nenhuma nota', 'Por favor, avalie pelo menos um produto dando estrelas antes de enviar.', 'warning');
+            }
+
+            try {
+                Swal.fire({ title: 'A guardar avaliação...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+                const res = await fetch('/api/avaliar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id_pedido: pedidoIdAtual,
+                        avaliacoes: avaliacoesParaEnviar
+                    })
+                });
+
+                const data = await res.json();
+                if (data.sucesso) {
+                    Swal.fire('Obrigado! ❤️', 'Suas avaliações foram salvas com sucesso!', 'success').then(() => {
+                        const modalEl = document.getElementById('modalAvaliacao');
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        modal.hide();
+                        carregarHistorico();
+                    });
+                } else {
+                    Swal.fire('Erro!', 'Não foi possível salvar: ' + data.erro, 'error');
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Erro de conexão!', 'Não foi possível comunicar com o servidor.', 'error');
+            }
+        }
+
+        carregarHistorico();
+    </script>
+</body>
+</html>

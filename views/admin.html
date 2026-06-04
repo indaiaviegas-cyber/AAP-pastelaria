@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Tenda do Pastel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Padronização de Cores Oficiais */
+        .bg-brand-blue { background-color: #0d1b2a; }
+        .bg-brand-red { background-color: #dc3545; }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .main-content {
+            flex: 1;
+            padding: 40px 0;
+        }
+
+        /* Estilos da Tabela Admin */
+        .img-preview { width: 50px; height: 50px; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
+        .baixo-estoque { color: #d32f2f; font-weight: bold; background-color: #ffebee; padding: 4px 8px; border-radius: 6px; font-size: 0.85rem;}
+        .table-admin th { background-color: #0d1b2a; color: white; border-bottom: none; }
+        
+        /* Estilos das Abas */
+        .nav-pills .nav-link { color: #0d1b2a; border-radius: 10px; margin-right: 10px; border: 1px solid #ddd; }
+        .nav-pills .nav-link.active { background-color: #dc3545; color: white; border-color: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-danger shadow-sm mb-4">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="#">
+                <span style="font-size: 1.5rem;">🥟</span> 
+                <span>Painel Admin <small class="text-white-50" style="font-size: 0.8rem; display:block;">Gestão Interna</small></span>
+            </a>
+            <div class="d-flex gap-2">
+                <a href="/" class="btn btn-outline-light btn-sm fw-bold px-3" style="border-radius: 8px;">
+                    <i class="fa-solid fa-store me-1"></i> Ver Loja
+                </a>
+                <button class="btn btn-dark btn-sm fw-bold px-3" style="border-radius: 8px;" onclick="sairAdmin()">
+                    Sair
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-content pt-0">
+        <div class="container">
+            
+            <ul class="nav nav-pills mb-4" id="adminTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-bold px-4" id="pedidos-tab" data-bs-toggle="pill" data-bs-target="#pedidos" type="button" role="tab">
+                        <i class="fa-solid fa-motorcycle me-2"></i>Gestão de Pedidos
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold px-4" id="cardapio-tab" data-bs-toggle="pill" data-bs-target="#cardapio" type="button" role="tab">
+                        <i class="fa-solid fa-boxes-stacked me-2"></i>Estoque e Cardápio
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-bold px-4" id="avaliacoes-tab" data-bs-toggle="pill" data-bs-target="#avaliacoes" type="button" role="tab">
+                        <i class="fa-solid fa-star me-2 text-warning"></i>Avaliações
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="adminTabsContent">
+                
+                <div class="tab-pane fade show active" id="pedidos" role="tabpanel">
+                    <div class="table-responsive shadow-sm" style="border-radius: 15px; overflow: hidden;">
+                        <table class="table table-hover table-admin mb-0 align-middle bg-white">
+                            <thead>
+                                <tr>
+                                    <th>Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Data / Hora</th>
+                                    <th>Total</th>
+                                    <th class="text-center">Status Atual</th>
+                                    <th class="text-center">Atualizar Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaPedidosAdmin">
+                                <tr><td colspan="6" class="text-center text-muted py-4">Carregando pedidos...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="cardapio" role="tabpanel">
+                    
+                    <div class="card p-4 shadow-sm mb-4 border-0" style="border-radius: 15px;">
+                        <h5 class="fw-bold mb-3 text-danger"><i class="fa-solid fa-plus-circle me-2"></i>Adicionar Novo Item</h5>
+                        <form id="formProduto">
+                            <div class="row g-3 align-items-center">
+                                <div class="col-md-3">
+                                    <input type="text" name="nome" class="form-control" placeholder="Nome do Produto" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light">R$</span>
+                                        <input type="number" step="0.01" name="preco" class="form-control" placeholder="Preço" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <select name="id_categoria" class="form-select">
+                                        <option value="7">Pastéis</option>
+                                        <option value="9">Bebidas</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="file" name="imagem" class="form-control" accept="image/*">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-success mt-3 w-100 fw-bold shadow-sm" style="border-radius: 10px;">
+                                Salvar Novo Item no Cardápio
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="table-responsive shadow-sm" style="border-radius: 15px; overflow: hidden;">
+                        <table class="table table-hover table-admin mb-0 align-middle bg-white">
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Foto</th>
+                                    <th>Nome do Produto</th>
+                                    <th>Preço</th>
+                                    <th class="text-center">Estoque</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-center">Ações Rápidas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaAdmin">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="avaliacoes" role="tabpanel">
+                    <div class="table-responsive shadow-sm" style="border-radius: 15px; overflow: hidden;">
+                        <table class="table table-hover table-admin mb-0 align-middle bg-white">
+                            <thead>
+                                <tr>
+                                    <th>Nº Pedido</th>
+                                    <th>Cliente</th>
+                                    <th>Produto Avaliado</th>
+                                    <th class="text-center">Nota</th>
+                                    <th>Comentário</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaAvaliacoesAdmin">
+                                <tr><td colspan="5" class="text-center text-muted py-4">Carregando avaliações...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-brand-blue py-4 mt-auto text-center border-top border-secondary">
+        <div class="container">
+            <p class="text-light mb-1 fw-medium" style="font-size: 0.95rem; letter-spacing: 0.5px;">
+                © 2024 Tenda do Pastel - Sistema de Gestão
+            </p>
+            <p class="text-muted small mb-0">Projeto Integrador FATEC - Acesso Restrito.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // ==========================================
+        // TRAVA DE SEGURANÇA (PENTE FINO)
+        // ==========================================
+        const adminLogado = JSON.parse(localStorage.getItem('usuario'));
+        
+        if (!adminLogado) {
+            Swal.fire('Acesso Negado', 'Você precisa fazer login como Administrador.', 'error')
+                .then(() => { window.location.href = '/login'; });
+        }
+
+        function sairAdmin() {
+            localStorage.removeItem('usuario');
+            window.location.href = '/login';
+        }
+
+        // ==========================================
+        // ABA 1: LÓGICA DE PEDIDOS (AGORA BLINDADA)
+        // ==========================================
+        async function carregarPedidosAdmin() {
+            try {
+                // Truque anti-cache: adicionamos o Date.now() para forçar o navegador a pegar os dados frescos!
+                const res = await fetch(`/api/admin/pedidos?t=${Date.now()}`);
+                if(!res.ok) return; 
+                
+                const pedidos = await res.json();
+                const lista = document.getElementById('tabelaPedidosAdmin');
+                lista.innerHTML = "";
+
+                if (pedidos.length === 0) {
+                    lista.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhum pedido recebido ainda.</td></tr>`;
+                    return;
+                }
+
+                pedidos.forEach(p => {
+                    let badgeCor = 'bg-secondary';
+                    if(p.status_pedido === 'Pendente') badgeCor = 'bg-warning text-dark';
+                    if(p.status_pedido === 'Preparando') badgeCor = 'bg-info text-dark';
+                    if(p.status_pedido === 'Saiu para Entrega') badgeCor = 'bg-primary';
+                    if(p.status_pedido === 'Entregue') badgeCor = 'bg-success';
+                    if(p.status_pedido === 'Cancelado') badgeCor = 'bg-danger';
+
+                    lista.innerHTML += `
+                        <tr>
+                            <td class="fw-bold text-danger">#${p.id_pedido}</td>
+                            <td class="fw-bold">${p.nome_cliente || 'Cliente'}</td>
+                            <td>${p.data}</td>
+                            <td class="text-success fw-bold">R$ ${parseFloat(p.valor_total).toFixed(2)}</td>
+                            <td class="text-center"><span class="badge ${badgeCor} px-2 py-1 shadow-sm">${p.status_pedido}</span></td>
+                            <td class="text-center">
+                                <select class="form-select form-select-sm d-inline-block w-auto shadow-sm" onchange="mudarStatusPedido(${p.id_pedido}, this.value)">
+                                    <option value="">Mudar para...</option>
+                                    <option value="Preparando">Preparando</option>
+                                    <option value="Saiu para Entrega">Saiu para Entrega</option>
+                                    <option value="Entregue">Entregue</option>
+                                    <option value="Cancelado">Cancelado</option>
+                                </select>
+                            </td>
+                        </tr>`;
+                });
+            } catch (err) {
+                console.error("Erro ao carregar pedidos do Admin:", err);
+            }
+        }
+
+        async function mudarStatusPedido(id_pedido, novoStatus) {
+            if(!novoStatus) return;
+            
+            // Colocamos o SweetAlert para "Pensar" antes de dizer sucesso
+            Swal.fire({ title: 'A atualizar...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+            try {
+                const res = await fetch(`/api/admin/pedidos/${id_pedido}/status`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: novoStatus })
+                });
+                
+                const data = await res.json(); // Agora ele cobra a resposta do servidor!
+                
+                if (data.sucesso) {
+                    Swal.fire({
+                        title: 'Atualizado!',
+                        text: `Pedido #${id_pedido} alterado para "${novoStatus}".`,
+                        icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 2000
+                    });
+                    carregarPedidosAdmin(); // Recarrega a tabela na hora
+                } else {
+                    // Se o banco de dados recusar, ele avisa-nos do porquê
+                    Swal.fire('Ops!', 'Erro no Banco de Dados: ' + data.erro, 'error');
+                }
+            } catch(err) {
+                Swal.fire('Erro', 'Falha na comunicação com o servidor.', 'error');
+            }
+        }
+
+        // ==========================================
+        // ABA 2: LÓGICA DE CARDÁPIO E ESTOQUE
+        // ==========================================
+        async function carregarCardapio() {
+            try {
+                const res = await fetch('/api/produtos');
+                const produtos = await res.json();
+                const lista = document.getElementById('tabelaAdmin');
+                lista.innerHTML = "";
+                
+                produtos.forEach(p => {
+                    const btnTexto = p.disponivel ? 'Pausar Venda' : 'Ativar Venda';
+                    const btnCor = p.disponivel ? 'btn-outline-danger' : 'btn-outline-success';
+                    const statusTexto = p.disponivel ? 'Ativo' : 'Pausado';
+                    const badgeCor = p.disponivel ? 'bg-success' : 'bg-secondary';
+                    
+                    const classeEstoque = p.estoque < 5 ? 'baixo-estoque' : 'fw-semibold text-dark';
+                    const aviso = p.estoque < 5 ? '⚠️ ' : '';
+
+                    lista.innerHTML += `
+                        <tr>
+                            <td class="text-center"><img src="${p.imagem}" class="img-preview shadow-sm" alt="Foto"></td>
+                            <td class="fw-bold text-dark">${p.nome}</td>
+                            <td class="text-success fw-bold">R$ ${parseFloat(p.preco).toFixed(2)}</td>
+                            <td class="text-center"><span class="${classeEstoque}">${aviso}${p.estoque} un.</span></td>
+                            <td class="text-center"><span class="badge ${badgeCor} px-2 py-1 shadow-sm">${statusTexto}</span></td>
+                            <td class="text-center">
+                                <div class="btn-group shadow-sm">
+                                    <button onclick="mudarPreco(${p.id_produto})" class="btn btn-sm btn-warning fw-bold text-dark" title="Mudar Preço">💰</button>
+                                    <button onclick="mudarEstoque(${p.id_produto})" class="btn btn-sm btn-primary fw-bold" title="Ajustar Estoque">📦</button>
+                                    <button onclick="gerarListaCompras()" class="btn btn-sm btn-info fw-bold text-dark" title="Relatório">📋</button>
+                                    <button onclick="fazerUploadFoto(${p.id_produto})" class="btn btn-sm btn-secondary fw-bold" title="Trocar Foto">🖼️</button>
+                                    <button onclick="toggle(${p.id_produto}, ${p.disponivel ? 0 : 1})" class="btn btn-sm ${btnCor} fw-bold" title="Ativar/Pausar">${btnTexto}</button>
+                                </div>
+                            </td>
+                        </tr>`;
+                });
+            } catch (err) {
+                console.error("Erro ao carregar produtos do Admin:", err);
+            }
+        }
+
+        document.getElementById('formProduto').onsubmit = async (e) => {
+            e.preventDefault();
+            try {
+                await fetch('/api/produtos', { method: 'POST', body: new FormData(e.target) });
+                Swal.fire('Sucesso!', 'Produto adicionado ao cardápio com sucesso!', 'success');
+                e.target.reset(); 
+                carregarCardapio();
+            } catch (err) {
+                Swal.fire('Erro', 'Não foi possível salvar o produto.', 'error');
+            }
+        };
+
+        async function mudarPreco(id) {
+            const { value: preco } = await Swal.fire({ 
+                title: 'Novo Preço', input: 'number', inputAttributes: { step: '0.01' }, inputLabel: 'Digite o novo valor'
+            });
+            if (preco) {
+                await fetch(`/api/produtos/${id}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({preco}) });
+                carregarCardapio();
+                Swal.fire('Preço Atualizado!', '', 'success');
+            }
+        }
+
+        async function mudarEstoque(id) {
+            const { value: estoque } = await Swal.fire({ title: 'Atualizar Estoque', input: 'number' });
+            if (estoque !== null && estoque !== "") {
+                await fetch(`/api/produtos/${id}/estoque`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ estoque: parseInt(estoque) }) });
+                carregarCardapio();
+                Swal.fire('Estoque Atualizado!', '', 'success');
+            }
+        }
+
+        async function fazerUploadFoto(id) {
+            const input = document.createElement('input');
+            input.type = 'file'; input.accept = 'image/*';
+            input.onchange = async (e) => {
+                const arquivo = e.target.files[0];
+                if (!arquivo) return;
+                Swal.fire({ title: 'A enviar imagem...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
+                const formData = new FormData(); formData.append('imagem', arquivo);
+                const res = await fetch(`/api/produtos/${id}/imagem`, { method: 'PATCH', body: formData });
+                if (res.ok) { Swal.fire('Sucesso!', 'Foto atualizada!', 'success'); carregarCardapio(); } 
+                else { Swal.fire('Erro', 'Falha no upload da imagem.', 'error'); }
+            };
+            input.click();
+        }
+
+        async function toggle(id, novoStatus) {
+            await fetch(`/api/produtos/${id}/status`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({novoStatus}) });
+            carregarCardapio();
+        }
+
+        async function gerarListaCompras() {
+            const res = await fetch('/api/produtos');
+            const produtos = await res.json();
+            const paraComprar = produtos.filter(p => p.estoque < 5);
+            if (paraComprar.length === 0) return Swal.fire('Tudo OK! ✅', 'Não há itens com menos de 5 unidades.', 'success');
+            let listaHtml = '<ul class="list-group list-group-flush text-start">';
+            paraComprar.forEach(p => listaHtml += `<li class="list-group-item px-0 border-0 mb-1"><strong>${p.nome}</strong>: Restam <span class="badge bg-danger">${p.estoque} un.</span></li>`);
+            listaHtml += '</ul>';
+            Swal.fire({ title: 'Relatório de Reposição 🛒', html: listaHtml, icon: 'warning', confirmButtonColor: '#0d1b2a' });
+        }
+
+        // ==========================================
+        // NOVA ABA 3: LÓGICA DE AVALIAÇÕES ADICIONADA
+        // ==========================================
+        async function carregarAvaliacoesAdmin() {
+            try {
+                const res = await fetch(`/api/admin/avaliacoes?t=${Date.now()}`);
+                if(!res.ok) return; 
+                
+                const avaliacoes = await res.json();
+                const lista = document.getElementById('tabelaAvaliacoesAdmin');
+                lista.innerHTML = "";
+
+                if (avaliacoes.length === 0) {
+                    lista.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Nenhuma avaliação recebida ainda.</td></tr>`;
+                    return;
+                }
+
+                avaliacoes.forEach(a => {
+                    let estrelas = "";
+                    for(let i=1; i<=5; i++) {
+                        if(i <= a.nota) estrelas += '<i class="fa-solid fa-star text-warning"></i>';
+                        else estrelas += '<i class="fa-solid fa-star" style="color: #ccc;"></i>';
+                    }
+
+                    lista.innerHTML += `
+                        <tr>
+                            <td class="fw-bold text-danger">#${a.id_pedido}</td>
+                            <td class="fw-bold text-dark">${a.nome_cliente}</td>
+                            <td>${a.nome_produto}</td>
+                            <td class="text-center" style="font-size: 1.1rem; min-width: 100px;">${estrelas}</td>
+                            <td class="text-muted fst-italic">"${a.comentario || 'Sem comentário'}"</td>
+                        </tr>`;
+                });
+            } catch (err) { 
+                console.error("Erro ao carregar avaliações do Admin:", err); 
+            }
+        }
+
+        // Inicia todas as abas
+        carregarCardapio();
+        carregarPedidosAdmin();
+        carregarAvaliacoesAdmin(); // Chama a nova função ao carregar a página
+    </script>
+</body>
+</html>

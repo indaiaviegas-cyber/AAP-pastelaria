@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Tenda do Pastel</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .bg-brand-blue { background-color: #0d1b2a; }
+        body { display: flex; flex-direction: column; min-height: 100vh; background-color: #f8f9fa; }
+        .main-content { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px 15px; }
+    </style>
+</head>
+<body>
+    
+    <nav class="navbar navbar-dark bg-danger shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+                <span style="font-size: 1.5rem;">🥟</span> 
+                <span>Tenda do Pastel <small class="text-white-50" style="font-size: 0.8rem; display:block;">Carapicuíba</small></span>
+            </a>
+            <a href="/" class="btn btn-outline-light btn-sm fw-bold px-3" style="border-radius: 8px;">
+                <i class="fa-solid fa-house me-1"></i> Início
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="card shadow-sm border-0 p-4 w-100" style="max-width: 400px; border-radius: 20px; background: #ffffff;">
+            <h3 class="text-center fw-bold mb-4" style="color: #dc3545;">Entrar na Conta</h3>
+            
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">E-mail</label>
+                    <input type="email" id="email" class="form-control form-control-lg bg-light" placeholder="exemplo@email.com" required style="border-radius: 10px;">
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold text-dark small">Senha</label>
+                    <input type="password" id="senha" class="form-control form-control-lg bg-light" placeholder="******" required style="border-radius: 10px;">
+                </div>
+                
+                <div class="text-end mb-4">
+                    <a href="#" onclick="recuperarSenha()" class="text-danger small fw-bold text-decoration-none">Esqueceu a senha?</a>
+                </div>
+
+                <button type="submit" class="btn btn-danger w-100 py-2 fw-bold shadow-sm" style="border-radius: 10px; font-size: 1.1rem;">
+                    Fazer Login 🚀
+                </button>
+            </form>
+            
+            <div class="mt-4 text-center">
+                <p class="text-muted small">Ainda não tem conta? <br><a href="/cadastro" class="text-danger fw-bold text-decoration-none">Cadastre-se aqui</a></p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-brand-blue py-4 mt-auto text-center border-top border-secondary">
+        <div class="container">
+            <p class="text-light mb-1 fw-medium" style="font-size: 0.95rem; letter-spacing: 0.5px;">
+                © 2024 Tenda do Pastel - Carapicuíba/SP
+            </p>
+            <p class="text-muted small mb-0">Projeto Integrador FATEC - Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('loginForm').onsubmit = async (e) => {
+            e.preventDefault();
+            
+            Swal.fire({ title: 'A validar...', allowOutsideClick: false, didOpen: () => { Swal.showLoading() } });
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ email: email.value, senha: senha.value })
+                });
+                
+                const data = await res.json();
+                
+                if (data.sucesso) {
+                    localStorage.setItem('usuario', JSON.stringify(data.usuario));
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Bem-vindo(a)!',
+                        text: `Olá, ${data.usuario.nome}! É bom ter-te de volta.`,
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.href = '/'; 
+                    });
+                } else {
+                    Swal.fire('Acesso Negado!', 'E-mail ou senha incorretos.', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Erro de Conexão', 'Não foi possível comunicar com o servidor.', 'error');
+            }
+        };
+
+        // FUNÇÃO PARA SIMULAR A RECUPERAÇÃO DE SENHA
+        async function recuperarSenha() {
+            const { value: email_recuperacao } = await Swal.fire({
+                title: 'Recuperar Senha 🔐',
+                input: 'email',
+                inputLabel: 'Digite o seu e-mail cadastrado',
+                inputPlaceholder: 'exemplo@email.com',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Enviar Link',
+                cancelButtonText: 'Cancelar'
+            });
+
+            if (email_recuperacao) {
+                Swal.fire(
+                    'Enviado! 📧', 
+                    `Se o e-mail <b>${email_recuperacao}</b> estiver na nossa base de dados, receberá um link com as instruções em alguns minutos.<br><br><small class="text-muted"><i>(Nota: Para efeitos de demonstração do TCC, este envio é simulado)</i></small>`, 
+                    'success'
+                );
+            }
+        }
+    </script>
+</body>
+</html>

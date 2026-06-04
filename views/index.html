@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenda do Pastel - Cardápio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        .search-box { border-radius: 20px; padding: 10px 20px; border: 1px solid #ddd; outline: none; transition: border-color 0.2s; }
+        .search-box:focus { border-color: #dc3545; box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25); }
+    </style>
+</head>
+<body>
+
+    <button class="btn btn-warning btn-carrinho-flutuante shadow fw-bold" data-bs-toggle="modal" data-bs-target="#modalCarrinho">
+        🛒 Meu Carrinho (<span id="contador-carrinho">0</span>)
+    </button>
+
+    <header class="hero shadow-sm bg-danger">
+        <div class="container text-center">
+            <h1 class="fw-bold text-white">🥟 Tenda do Pastel</h1>
+            <p class="text-white-50">Qualidade e sabor direto de Barueri!</p>
+            
+            <div id="area-login" class="d-flex justify-content-center align-items-center mt-3">
+                <div class="d-flex flex-column flex-sm-row align-items-center justify-content-center gap-2 w-100">
+                    <a href="/login" class="btn btn-outline-light btn-sm px-3 me-1">Login</a>
+                    <a href="/cadastro" class="btn btn-warning btn-sm fw-bold text-dark px-3">Cadastrar</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mt-5">
+        
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="input-group shadow-sm">
+                    <span class="input-group-text bg-white border-end-0 rounded-start-pill" id="search-icon">🔍</span>
+                    <input type="text" id="campo-pesquisa" class="form-control search-box border-start-0 ps-0" placeholder="Procurar pastéis, bebidas..." aria-label="Pesquisa" aria-describedby="search-icon">
+                </div>
+            </div>
+            <div class="col-md-6 d-flex align-items-center justify-content-md-end mt-3 mt-md-0">
+                <select id="filtro-categoria" class="form-select shadow-sm fw-bold text-dark" style="max-width: 250px; border-radius: 20px; border: 1px solid #ddd; cursor: pointer;">
+                    <option value="todos">🥟 Todas as Categorias</option>
+                    <option value="1">Pastéis Salgados</option>
+                    <option value="2">Pastéis Doces</option>
+                    <option value="3">Tradicionais</option>
+                    <option value="4">Combos</option>
+                    <option value="5">Artesanais</option>
+                    <option value="6">Baguete</option>
+                    <option value="7">Hot Dog</option>
+                    <option value="8">Barcas</option>
+                    <option value="9">Bebidas</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="lista-pasteis" class="row"></div>
+        <div id="mensagem-vazia" class="text-center mt-5 mb-5 d-none">
+            <h4 class="text-muted fw-bold">Nenhum produto encontrado. 😢</h4>
+            <p class="text-muted">Tente procurar com outras palavras.</p>
+        </div>
+    </main>
+
+    <div class="modal fade" id="modalCarrinho" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Seu Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <ul id="itens-carrinho" class="list-group list-group-flush mb-3"></ul>
+                    
+                    <div class="d-flex justify-content-between align-items-center fw-bold fs-4 border-top pt-3">
+                        <span>Total:</span> <span class="text-success" id="total-carrinho">R$ 0.00</span>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-danger w-100 fw-bold py-2" onclick="finalizarPedido()">Finalizar Pedido</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalEdicao" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="titulo-edicao">Personalizar</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="fw-bold text-muted small mb-3">Adicionais disponíveis:</p>
+                    <div id="lista-adicionais" class="row px-2"></div>
+                    <hr>
+                    <label class="fw-bold mb-2 small">Alguma observação?</label>
+                    <textarea id="obs-item" class="form-control" rows="2" placeholder="Ex: Sem cebola, bem frito..."></textarea>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-danger w-100 fw-bold" onclick="salvarEdicao()">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-4 text-center text-light" style="background-color: #0d1b2a; border-top: 1px solid #343a40;">
+        <div class="container">
+            <p class="mb-1 fw-medium" style="font-size: 0.95rem; letter-spacing: 0.5px;">
+                © 2024 Tenda do Pastel - Carapicuíba/SP
+            </p>
+            <p class="text-muted small mb-0">Projeto Integrador FATEC - Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/scripts-globais.js"></script>
+
+    <script>
+        var indexSendoEditado = null;
+        let todosProdutosGlobais = [];
+
+        function renderizarEstrelas(media) {
+            let estrelas = "";
+            if (!media || parseFloat(media) === 0) {
+                for (let i = 1; i <= 5; i++) {
+                    estrelas += '<span style="color: #ccc; font-size: 1.1rem;">★</span>';
+                }
+                return `<div class="mb-2" title="Ainda não avaliado">${estrelas} <small class="text-muted">(0.0)</small></div>`;
+            }
+            
+            const notaArredondada = Math.round(parseFloat(media));
+            for (let i = 1; i <= 5; i++) {
+                if (i <= notaArredondada) {
+                    estrelas += '<span style="color: #ffc107; font-size: 1.1rem;">★</span>';
+                } else {
+                    estrelas += '<span style="color: #ccc; font-size: 1.1rem;">★</span>';
+                }
+            }
+            return `<div class="mb-2" title="Média: ${parseFloat(media).toFixed(1)}">${estrelas} <small class="text-muted">(${parseFloat(media).toFixed(1)})</small></div>`;
+        }
+
+        async function carregarVitrine() {
+            try {
+                const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
+
+                if (usuarioLogado) {
+                    let botaoAdmin = "";
+                    if (usuarioLogado.id === 1) {
+                        botaoAdmin = `
+                            <a href="/admin" class="btn btn-dark btn-sm px-3 fw-bold border-light shadow-sm">
+                                ⚙️ Painel Admin
+                            </a>
+                        `;
+                    }
+
+                    document.getElementById('area-login').innerHTML = `
+                        <div class="d-flex flex-column flex-sm-row align-items-center justify-content-center gap-2 w-100">
+                            <span class="text-white fw-semibold mb-2 mb-sm-0 text-center">
+                                Olá, <span class="text-warning text-capitalize">${usuarioLogado.nome}</span>!
+                            </span>
+                            <div class="d-flex gap-2">
+                                ${botaoAdmin}
+                                <a href="/perfil" class="btn btn-outline-light btn-sm px-3 fw-bold" title="Meu Perfil">
+                                    👤 Perfil
+                                </a>
+                                <a href="/meus-pedidos" class="btn btn-warning btn-sm fw-bold text-dark shadow-sm px-3">
+                                    📋 Meus Pedidos
+                                </a>
+                                <button class="btn btn-outline-light btn-sm px-3" onclick="localStorage.removeItem('usuario'); window.location.reload();">
+                                    Sair
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                const res = await fetch('/api/produtos-media');
+                const produtos = await res.json();
+                
+                todosProdutosGlobais = produtos.filter(p => p.disponivel === 1);
+                mostrarProdutosNaTela(todosProdutosGlobais);
+                atualizarVisualCarrinho(); 
+
+            } catch (erro) {
+                console.error("Erro ao carregar cardápio:", erro);
+            }
+        }
+
+        function mostrarProdutosNaTela(listaDeProdutos) {
+            const container = document.getElementById('lista-pasteis');
+            const mensagemVazia = document.getElementById('mensagem-vazia');
+            container.innerHTML = "";
+
+            if (listaDeProdutos.length === 0) {
+                mensagemVazia.classList.remove('d-none');
+            } else {
+                mensagemVazia.classList.add('d-none');
+                listaDeProdutos.forEach(item => {
+                    let seloEsgotado = "";
+                    let botaoAtributos = "";
+                    let estiloEsgotado = "";
+
+                    // Proteção de banco de dados e aspas simples
+                    let estoqueReal = (item.estoque !== null && item.estoque !== undefined) ? item.estoque : 999;
+                    let nomeSeguro = item.nome.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
+                    if (estoqueReal < 3) {
+                        seloEsgotado = `<span class="badge bg-dark position-absolute top-0 end-0 m-3 shadow-sm" style="z-index: 10;">INDISPONÍVEL</span>`;
+                        botaoAtributos = "disabled"; 
+                        estiloEsgotado = "filter: grayscale(50%); opacity: 0.7;";
+                    }
+
+                    container.innerHTML += `
+                        <div class="col-12 col-sm-6 col-md-4 mb-4">
+                            <div class="card shadow-sm text-center h-100 border-0" style="border-radius: 15px; position: relative; ${estiloEsgotado}">
+                                ${seloEsgotado}
+                                <img src="${item.imagem}" class="card-img-top" alt="Foto" style="height: 200px; object-fit: cover; border-top-left-radius: 15px; border-top-right-radius: 15px;">
+                                <div class="card-body p-4 d-flex flex-column">
+                                    <h5 class="card-title text-danger fw-bold fs-5 mb-1">${item.nome}</h5>
+                                    
+                                    ${renderizarEstrelas(item.media)}
+                                    
+                                    <div class="fw-bold fs-6 text-success mt-auto mb-3">R$ ${parseFloat(item.preco).toFixed(2)}</div>
+                                    
+                                    <button class="btn btn-danger w-100 fw-bold shadow-sm" ${botaoAtributos}
+                                        onclick="adicionar(${item.id_produto}, '${nomeSeguro}', ${item.preco}, ${item.id_categoria}, ${estoqueReal})">
+                                        ${estoqueReal < 3 ? 'Indisponível' : 'Adicionar 🛒'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            }
+        }
+
+        document.getElementById('campo-pesquisa').addEventListener('input', function(e) {
+            const termoBuscado = e.target.value.toLowerCase();
+            document.getElementById('filtro-categoria').value = "todos";
+            const filtrados = todosProdutosGlobais.filter(p => p.nome.toLowerCase().includes(termoBuscado));
+            mostrarProdutosNaTela(filtrados);
+        });
+
+        document.getElementById('filtro-categoria').addEventListener('change', function() {
+            document.getElementById('campo-pesquisa').value = "";
+            const categoriaSelecionada = this.value;
+            if (categoriaSelecionada === 'todos') {
+                mostrarProdutosNaTela(todosProdutosGlobais);
+            } else {
+                const filtrados = todosProdutosGlobais.filter(p => p.id_categoria == categoriaSelecionada);
+                mostrarProdutosNaTela(filtrados);
+            }
+        });
+
+        // -----------------------------------------------------------
+
+        function adicionar(id, nome, preco, categoria, estoqueAtual) {
+            // Garante que o carrinho existe mesmo se o script-global falhar
+            if (typeof carrinho === 'undefined') { window.carrinho = []; }
+
+            const itemNoCarrinho = carrinho.find(p => p.id_produto === id);
+            const qtdFutura = itemNoCarrinho ? itemNoCarrinho.quantidade + 1 : 1;
+
+            if (estoqueAtual !== 999 && (estoqueAtual < 3 || qtdFutura > estoqueAtual)) {
+                return Swal.fire('Ops!', 'Não temos quantidade suficiente em estoque!', 'error');
+            }
+
+            if (itemNoCarrinho) {
+                itemNoCarrinho.quantidade++;
+            } else {
+                carrinho.push({ 
+                    id_produto: id, nome: nome, preco_base: parseFloat(preco), 
+                    preco: parseFloat(preco), quantidade: 1, extras_texto: '', observacoes: '',
+                    id_categoria: categoria,
+                    estoque_max: estoqueAtual 
+                });
+            }
+            
+            salvarCarrinho();
+            Swal.fire({ title: 'Adicionado!', text: `${nome} foi para a sacola.`, icon: 'success', toast: true, position: 'top-end', showConfirmButton: false, timer: 1500 });
+        }
+
+        function atualizarVisualCarrinho() {
+            const list = document.getElementById('itens-carrinho');
+            let soma = 0; let qtdTotal = 0;
+            list.innerHTML = '';
+
+            carrinho.forEach((item, index) => {
+                const subtotal = item.preco * item.quantidade;
+                soma += subtotal; qtdTotal += item.quantidade;
+
+                list.innerHTML += `
+                    <li class="list-group-item border-0 border-bottom py-3 px-0">
+                        <div class="d-flex justify-content-between">
+                            <div style="max-width: 65%;">
+                                <span class="fw-bold">${item.nome}</span>
+                                <small class="text-danger d-block">${item.extras_texto ? '➕ ' + item.extras_texto : ''}</small>
+                                <small class="text-muted d-block italic">${item.observacoes ? '📝 ' + item.observacoes : ''}</small>
+                            </div>
+                            <div class="text-end">
+                                <b>R$ ${subtotal.toFixed(2)}</b>
+                                <div class="btn-group btn-group-sm mt-1">
+                                    <button class="btn btn-outline-secondary" onclick="mudarQtd(${index}, -1)">-</button>
+                                    <span class="px-2 py-1">${item.quantidade}</span>
+                                    <button class="btn btn-outline-secondary" onclick="mudarQtd(${index}, 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-sm btn-link p-0 text-danger text-decoration-none me-3 fw-bold" onclick="abrirEdicao(${index})">Personalizar</button>
+                            <button class="btn btn-sm btn-link p-0 text-muted text-decoration-none" onclick="remover(${index})">Remover</button>
+                        </div>
+                    </li>`;
+            });
+            document.getElementById('total-carrinho').innerText = "R$ " + soma.toFixed(2);
+            document.getElementById('contador-carrinho').innerText = qtdTotal;
+        }
+
+        async function abrirEdicao(index) {
+            indexSendoEditado = index;
+            const item = carrinho[index];
+            const nomeLower = item.nome.toLowerCase();
+            
+            let avisoLimite = "";
+            if (item.id_categoria == 8) {
+                if (nomeLower.includes("500ml")) avisoLimite = " (Até 2 grátis)";
+                else if (nomeLower.includes("barca")) avisoLimite = " (Até 4 grátis)";
+            }
+            
+            document.getElementById('titulo-edicao').innerText = "Personalizar " + item.nome + avisoLimite;
+            document.getElementById('obs-item').value = item.observacoes;
+
+            try {
+                const res = await fetch(`/api/adicionais/${item.id_categoria}`);
+                const adicionaisBanco = res.ok ? await res.json() : [];
+
+                let html = "";
+                adicionaisBanco.forEach(ad => {
+                    const checked = item.extras_texto.includes(ad.nome_adicional) ? 'checked' : '';
+                    html += `
+                        <div class="col-6 mb-2">
+                            <div class="form-check border p-2 rounded">
+                                <input class="form-check-input check-extra ms-1" type="checkbox" 
+                                    value="${ad.preco_adicional}" data-nome="${ad.nome_adicional}" 
+                                    id="ad_${ad.id_adicional}" ${checked}>
+                                <label class="form-check-label ms-2 small fw-bold" for="ad_${ad.id_adicional}">
+                                    ${ad.nome_adicional}
+                                </label>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('lista-adicionais').innerHTML = html || "<p class='text-center text-muted'>Nenhum adicional encontrado no banco.</p>";
+                
+                const modalC = bootstrap.Modal.getOrCreateInstance(document.getElementById('modalCarrinho'));
+                modalC.hide();
+                
+                setTimeout(() => {
+                    const modalE = new bootstrap.Modal(document.getElementById('modalEdicao'));
+                    modalE.show();
+                }, 400);
+
+            } catch (e) {
+                Swal.fire('Erro', 'Não foi possível carregar os adicionais.', 'error');
+            }
+        }
+
+        function salvarEdicao() {
+            const item = carrinho[indexSendoEditado];
+            const checks = document.querySelectorAll('.check-extra:checked');
+            const nomeLower = item.nome.toLowerCase();
+        
+            let extras = [];
+            let adicionalFinanceiro = 0;
+        
+            let limiteGratis = 0;
+            if (item.id_categoria == 8) {
+                if (nomeLower.includes("500ml")) limiteGratis = 2;
+                else if (nomeLower.includes("barca")) limiteGratis = 4;
+            }
+
+            checks.forEach((c, index) => {
+                extras.push(c.getAttribute('data-nome'));
+                if (item.id_categoria == 8) {
+                    if ((index + 1) > limiteGratis) {
+                        adicionalFinanceiro += parseFloat(c.value);
+                    }
+                } else {
+                    adicionalFinanceiro += parseFloat(c.value);
+                }
+            });
+
+            item.extras_texto = extras.join(", ");
+            item.observacoes = document.getElementById('obs-item').value;
+            item.preco = item.preco_base + adicionalFinanceiro;
+
+            salvarCarrinho(); 
+        
+            bootstrap.Modal.getInstance(document.getElementById('modalEdicao')).hide();
+            setTimeout(() => {
+                const modalC = new bootstrap.Modal(document.getElementById('modalCarrinho'));
+                modalC.show();
+            }, 400);
+        }
+
+        async function finalizarPedido() {
+            const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
+
+            if (!usuarioLogado) {
+                return Swal.fire({
+                    title: 'Falta o Login! 🔐',
+                    text: 'Para finalizar o seu pedido, você precisa entrar na sua conta.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d32f2f',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Ir para Login',
+                    cancelButtonText: 'Voltar ao Carrinho'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = '/login'; 
+                    }
+                });
+            }
+
+            if (carrinho.length === 0) return Swal.fire('Vazio!', 'Seu carrinho está vazio.', 'warning');
+
+            window.location.href = '/checkout';
+        }
+
+        function mudarQtd(index, delta) {
+            const item = carrinho[index];
+            const novaQtd = item.quantidade + delta;
+
+            if (delta > 0 && novaQtd > item.estoque_max) {
+                return Swal.fire('Limite atingido', 'Não temos mais unidades deste item em estoque.', 'warning');
+            }
+
+            if (novaQtd <= 0) {
+                remover(index);
+            } else {
+                item.quantidade = novaQtd;
+                salvarCarrinho();
+            }
+        }
+        
+        function remover(i) { carrinho.splice(i, 1); salvarCarrinho(); }
+        
+        carregarVitrine();
+    </script>
+</body>
+</html>

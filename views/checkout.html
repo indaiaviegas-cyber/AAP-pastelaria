@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenda do Pastel - Checkout</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Cores oficiais da Tenda do Pastel */
+        .bg-brand-blue { background-color: #0d1b2a; }
+        .bg-brand-red { background-color: #dc3545; }
+        .text-brand-yellow { color: #ffca28; }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .main-content {
+            flex: 1;
+            padding: 40px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-danger shadow-sm mb-2">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+                <span style="font-size: 1.5rem;">🥟</span> 
+                <span>Tenda do Pastel <small class="text-white-50" style="font-size: 0.8rem; display:block;">Carapicuíba</small></span>
+            </a>
+            <a href="/" class="btn btn-outline-light btn-sm fw-bold px-3" style="border-radius: 8px;">
+                <i class="fa-solid fa-house me-1"></i> Cardápio
+            </a>
+        </div>
+    </nav>
+
+    <div class="main-content">
+        <div class="container">
+            <h2 class="fw-bold mb-4 text-dark">Finalizar Pedido 🥟</h2>
+            
+            <div class="row">
+                <div class="col-md-7">
+                    <div class="card shadow-sm border-0 p-4 mb-4" style="border-radius: 15px; background: #ffffff;">
+                        <h5 class="fw-bold border-bottom pb-2 text-dark"><i class="fa-solid fa-list-check me-2 text-danger"></i>1. Resumo dos Itens</h5>
+                        <ul id="resumo-itens" class="list-group list-group-flush"></ul>
+                        <div class="d-flex justify-content-between mt-3 fs-5 fw-bold text-success">
+                            <span>Total dos Itens:</span>
+                            <span id="total-revisao">R$ 0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="card shadow-sm border-0 p-4 mb-4" style="border-radius: 15px; background: #ffffff;">
+                        <h5 class="fw-bold border-bottom pb-2 text-dark"><i class="fa-solid fa-truck-ramp-box me-2 text-danger"></i>2. Como deseja receber?</h5>
+                        
+                        <div class="form-check mb-3 mt-2">
+                            <input class="form-check-input" type="radio" name="opcaoEntrega" id="entrega" value="entrega" checked onchange="atualizarOpcaoEntrega()">
+                            <label class="form-check-label fw-bold text-dark" for="entrega">
+                                🛵 Receber em Casa (Delivery)
+                            </label>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="radio" name="opcaoEntrega" id="retirada" value="retirada" onchange="atualizarOpcaoEntrega()">
+                            <label class="form-check-label fw-bold text-dark" for="retirada">
+                                🏪 Retirar na Tenda
+                            </label>
+                        </div>
+
+                        <div id="bloco-endereco" class="alert alert-warning border-0 mt-2 mb-0 shadow-sm" style="border-radius: 10px;">
+                            <strong>Endereço de Entrega:</strong> <span id="endereco-cliente">Carregando...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-5">
+                    <div class="card shadow-sm border-0 p-4" style="border-radius: 15px; background: #ffffff;">
+                        <h5 class="fw-bold mb-3 border-bottom pb-2 text-dark"><i class="fa-solid fa-receipt me-2 text-danger"></i>Resumo da Compra</h5>
+                        
+                        <p class="d-flex justify-content-between mb-2 text-muted">Subtotal: <span id="subtotal" class="text-dark fw-semibold">R$ 0.00</span></p>
+                        <p class="d-flex justify-content-between text-danger mb-2">Taxa de Entrega: <span id="taxa" class="fw-semibold">R$ 5.00</span></p>
+                        <hr class="mt-2 mb-3">
+                        <h4 class="d-flex justify-content-between fw-bold mb-4 text-dark">Total Final: <span id="total-final" class="text-success">R$ 0.00</span></h4>
+                        
+                        <h5 class="fw-bold border-top pt-3 pb-2 fs-6 text-muted">3. Escolha a Forma de Pagamento</h5>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="formaPagamento" id="pag-pix" value="PIX" checked onchange="autalizarOpcaoPagamento()">
+                            <label class="form-check-label fw-bold small text-dark" for="pag-pix">📱 PIX</label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="formaPagamento" id="pag-cartao" value="Cartão" onchange="autalizarOpcaoPagamento()">
+                            <label class="form-check-label fw-bold small text-dark" for="pag-cartao">💳 Cartão (Débito/Crédito)</label>
+                        </div>
+                        
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="formaPagamento" id="pag-pluxee" value="pluxee" checked onchange="autalizarOpcaoPagamento()">
+                            <label class="form-check-label fw-bold small text-dark" for="pag-pluxee">💳 Pluxee</label>
+                        </div>
+
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="formaPagamento" id="pag-dinheiro" value="Dinheiro" onchange="autalizarOpcaoPagamento()">
+                            <label class="form-check-label fw-bold small text-dark" for="pag-dinheiro">💵 Dinheiro</label>
+                        </div>
+
+                        <div id="bloco-troco" class="mt-2 mb-3 d-none">
+                            <label class="form-label small text-muted mb-1">Precisa de troco? Para quanto?</label>
+                            <input type="text" id="troco-para" class="form-control form-control-sm" placeholder="Ex: Troco para R$ 50,00">
+                        </div>
+                        
+                        <hr class="my-3">
+
+                        <button class="btn btn-success w-100 fw-bold py-2 shadow-sm" onclick="confirmarPedidoFinal()" style="border-radius: 10px;">
+                            Confirmar e Enviar Pedido 🚀
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-brand-blue py-4 mt-auto text-center border-top border-secondary">
+        <div class="container">
+            <p class="text-light mb-1 fw-medium" style="font-size: 0.95rem; letter-spacing: 0.5px;">
+                © 2024 Tenda do Pastel - Carapicuíba/SP
+            </p>
+            <p class="text-muted small mb-0">Projeto Integrador FATEC - Todos os direitos reservados.</p>
+        </div>
+    </footer>
+
+    <script>
+        let carrinho = JSON.parse(localStorage.getItem('carrinho')) || [];
+        const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
+
+        // TRAVA DE SEGURANÇA: Cancela o acesso se tentar fraudar/pular etapas
+        if (!usuarioLogado || carrinho.length === 0) {
+            window.location.href = '/';
+        }
+
+        let subtotalPedido = 0;
+        let taxaEntrega = 5.00;
+
+        function carregarResumo() {
+            const lista = document.getElementById('resumo-itens');
+            const totalTexto = document.getElementById('total-revisao');
+            
+            subtotalPedido = 0;
+            lista.innerHTML = '';
+
+            carrinho.forEach(item => {
+                const subtotalItem = item.preco * item.quantidade;
+                subtotalPedido += subtotalItem;
+                lista.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between px-0 border-0 bg-transparent">
+                        <div>
+                            <strong class="text-dark">${item.quantidade}x ${item.nome}</strong><br>
+                            <small class="text-danger">${item.extras_texto || ''}</small>
+                        </div>
+                        <span class="text-dark fw-medium">R$ ${subtotalItem.toFixed(2)}</span>
+                    </li>`;
+            });
+
+            totalTexto.innerText = "R$ " + subtotalPedido.toFixed(2);
+            document.getElementById('endereco-cliente').innerText = usuarioLogado.endereco || "Não informado";
+            
+            atualizarValoresFinais();
+        }
+
+        function atualizarOpcaoEntrega() {
+            const opcaoSelecionada = document.querySelector('input[name="opcaoEntrega"]:checked').value;
+            const blocoEndereco = document.getElementById('bloco-endereco');
+
+            if (opcaoSelecionada === 'retirada') {
+                taxaEntrega = 0.00;
+                blocoEndereco.classList.add('d-none');
+            } else {
+                taxaEntrega = 5.00;
+                blocoEndereco.classList.remove('d-none');
+            }
+
+            atualizarValoresFinais();
+        }
+
+        function autalizarOpcaoPagamento() {
+            const pagamentoSelecionado = document.querySelector('input[name="formaPagamento"]:checked').value;
+            const blocoTroco = document.getElementById('bloco-troco');
+
+            if (pagamentoSelecionado === 'Dinheiro') {
+                blocoTroco.classList.remove('d-none');
+            } else {
+                blocoTroco.classList.add('d-none');
+                document.getElementById('troco-para').value = "";
+            }
+        }
+
+        function atualizarValoresFinais() {
+            document.getElementById('subtotal').innerText = "R$ " + subtotalPedido.toFixed(2);
+            document.getElementById('taxa').innerText = "R$ " + taxaEntrega.toFixed(2);
+            document.getElementById('total-final').innerText = "R$ " + (subtotalPedido + taxaEntrega).toFixed(2);
+        }
+
+        async function confirmarPedidoFinal() {
+            if (carrinho.length === 0) {
+                return Swal.fire('Sacola Vazia', 'O seu carrinho está vazio!', 'warning');
+            }
+
+            const tipoEntrega = document.querySelector('input[name="opcaoEntrega"]:checked').value;
+            const formaPagamento = document.querySelector('input[name="formaPagamento"]:checked').value;
+            const troco = document.getElementById('troco-para').value || "Não precisa";
+            const totalFinal = subtotalPedido + taxaEntrega;
+
+            try {
+                const res = await fetch('/api/finalizar-pedido', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        itens: carrinho,
+                        id_cliente: usuarioLogado.id,
+                        total: totalFinal,
+                        forma_pagamento: formaPagamento,
+                        tipo_entrega: tipoEntrega,
+                        troco: troco
+                    })
+                });
+
+                const data = await res.json();
+
+                if (data.sucesso) {
+                    // Guarda o objeto com as informações cruciais antes de expirar a memória local do carrinho
+                    localStorage.setItem('ultimo_pedido', JSON.stringify({
+                        id_pedido: data.id_pedido,
+                        tipo_entrega: tipoEntrega,
+                        itens: carrinho, 
+                        pagamento: formaPagamento,
+                        troco: troco,
+                        total: totalFinal
+                    }));
+
+                    // Limpeza estrita do carrinho local
+                    carrinho = []; 
+                    localStorage.removeItem('carrinho'); 
+
+                    window.location.href = '/sucesso'; 
+                } else {
+                    Swal.fire('Erro', 'Ocorreu um erro ao processar o seu pedido.', 'error');
+                }
+            } catch (err) {
+                console.error("Erro na comunicação com o servidor:", err);
+                Swal.fire('Falha de Conexão', 'Não foi possível conectar ao servidor.', 'error');
+            }
+        }
+
+        carregarResumo();
+    </script>
+</body>
+</html>
